@@ -23,9 +23,23 @@ high_freq_mean = X_raw[:, -10:].mean(axis=1, keepdims=True)
 gain_drop = (X_raw[:, 0] - X_raw[:, -1]).reshape(-1, 1)
 
 # Yeni eklenen öznitelikler:
+#  - gain_std: Tüm kazanç eğrisinin standart sapması
+#  - gain_skew / gain_kurt: Çarpıklık ve basıklık değerleri
 gain_std = X_raw.std(axis=1, keepdims=True)
 gain_skew = skew(X_raw, axis=1).reshape(-1, 1)
 gain_kurt = kurtosis(X_raw, axis=1).reshape(-1, 1)
+
+# --- Ek Öznitelikler: Bant RMS ve türev istatistikleri ---
+# Bant RMS hesaplamaları (farklı frekans aralıklarının enerji seviyesi)
+band1_rms = np.sqrt(np.mean(np.square(X_raw[:, :5]), axis=1, keepdims=True))
+band2_rms = np.sqrt(np.mean(np.square(X_raw[:, 5:20]), axis=1, keepdims=True))
+band3_rms = np.sqrt(np.mean(np.square(X_raw[:, 20:50]), axis=1, keepdims=True))
+
+# Birinci dereceden türev (yaklaşık eğri eğimi)
+first_deriv = np.diff(X_raw, axis=1)
+deriv_mean = first_deriv.mean(axis=1, keepdims=True)
+deriv_std = first_deriv.std(axis=1, keepdims=True)
+deriv_abs_mean = np.mean(np.abs(first_deriv), axis=1, keepdims=True)
 
 # Band ortalamaları (örnek olarak 3 bant):
 band1_mean = X_raw[:, :5].mean(axis=1, keepdims=True)    # ilk 5 frekans bölgesi
@@ -38,10 +52,13 @@ X_extra = np.hstack([
     low_freq_mean, high_freq_mean,
     gain_drop,
     gain_std, gain_skew, gain_kurt,
-    band1_mean, band2_mean, band3_mean
-])  # → (n_samples, 12 ek özellik)
+    band1_mean, band2_mean, band3_mean,
+    # RMS değerleri ve türev istatistikleri
+    band1_rms, band2_rms, band3_rms,
+    deriv_mean, deriv_std, deriv_abs_mean
+])  # → (n_samples, 18 ek özellik)
 
-X_full = np.hstack([X_raw, X_extra])  # (n_samples, 255 + 12 = 267)
+X_full = np.hstack([X_raw, X_extra])  # (n_samples, 255 + 18 = 273)
 
 # === 4. GİRİŞ SCALING ===
 scaler_X = MinMaxScaler()
@@ -76,7 +93,7 @@ print("✅ Scaler dosyaları 'scalers/' klasörüne kaydedildi.")
 
 # === 10. KONTROL ÇIKTISI ===
 print("✅ Scaling tamamlandı:")
-print("🔸 Giriş boyutu (X):", X_tensor.shape)    # örn: (258489, 267)
+print("🔸 Giriş boyutu (X):", X_tensor.shape)    # örn: (258489, 273)
 print("🔸 Çıkış boyutu (y):", y_tensor.shape)    # örn: (258489, 10)
 print("🔧 Giriş sütunu sayısı:", X_tensor.shape[1])
 print("🔧 Çıkış komponentleri:", component_cols)
