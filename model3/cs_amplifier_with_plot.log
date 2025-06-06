@@ -1,0 +1,15 @@
+LTspice 24.1.5 for Windows
+Circuit: C:\Users\gokha\Desktop\MODEL_V7\model3\cs_amplifier_with_plot.net
+Start Time: Wed Jun  4 03:03:54 2025
+solver = Normal
+Maximum thread count: 8
+tnom = 27
+temp = 27
+method = trap
+Direct Newton iteration for .op point succeeded.
+Total elapsed time: 0.080 seconds.
+
+Files loaded:
+C:\Users\gokha\Desktop\MODEL_V7\model3\cs_amplifier_with_plot.net
+C:\Users\gokha\AppData\Local\LTspice\lib\cmp\standard.mos
+
