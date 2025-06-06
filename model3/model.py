@@ -11,14 +11,19 @@ class InverseGainMLP(nn.Module):
             nn.Linear(273, 512),
             nn.LayerNorm(512),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.2),
+            nn.Dropout(p=0.3),
 
             nn.Linear(512, 256),
             nn.LayerNorm(256),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.2),
+            nn.Dropout(p=0.3),
 
             nn.Linear(256, 128),
+            nn.LayerNorm(128),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.2),
+
+            nn.Linear(128, 128),
             nn.LayerNorm(128),
             nn.ReLU(inplace=True)
         )
@@ -28,7 +33,10 @@ class InverseGainMLP(nn.Module):
             nn.Linear(128, 64),
             nn.LayerNorm(64),
             nn.ReLU(inplace=True),
-            nn.Dropout(0.2)
+            nn.Dropout(0.25),
+            nn.Linear(64, 64),
+            nn.LayerNorm(64),
+            nn.ReLU(inplace=True)
         )
 
         # --- 3. Çıkış Head'leri (Her bir komponent için) ---
