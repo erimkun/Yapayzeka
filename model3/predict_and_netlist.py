@@ -49,7 +49,7 @@ plt.tight_layout()
 plt.show()
 
 # ----------------------------------------
-# 5. Feature Engineering (Model’in Beklediği 267 Boyutlu Vektör)
+# 5. Feature Engineering (Model’in Beklediği 273 Boyutlu Vektör)
 # ----------------------------------------
 gain_row_2d = gain_row.reshape(1, -1)  # (1, 255)
 
@@ -68,20 +68,32 @@ band1_mean = gain_row_2d[:, :5].mean(axis=1, keepdims=True)
 band2_mean = gain_row_2d[:, 5:20].mean(axis=1, keepdims=True)
 band3_mean = gain_row_2d[:, 20:50].mean(axis=1, keepdims=True)
 
+# RMS ve türev tabanlı özellikler (scaling.py ile aynı mantık)
+band1_rms = np.sqrt(np.mean(np.square(gain_row_2d[:, :5]), axis=1, keepdims=True))
+band2_rms = np.sqrt(np.mean(np.square(gain_row_2d[:, 5:20]), axis=1, keepdims=True))
+band3_rms = np.sqrt(np.mean(np.square(gain_row_2d[:, 20:50]), axis=1, keepdims=True))
+
+first_deriv = np.diff(gain_row_2d, axis=1)
+deriv_mean = first_deriv.mean(axis=1, keepdims=True)
+deriv_std = first_deriv.std(axis=1, keepdims=True)
+deriv_abs_mean = np.mean(np.abs(first_deriv), axis=1, keepdims=True)
+
 X_extra = np.hstack([
     gain_max, gain_min, gain_mean,
     low_freq_mean, high_freq_mean,
     gain_drop,
     gain_std, gain_skew, gain_kurt,
-    band1_mean, band2_mean, band3_mean
-])  # (1, 12)
+    band1_mean, band2_mean, band3_mean,
+    band1_rms, band2_rms, band3_rms,
+    deriv_mean, deriv_std, deriv_abs_mean
+])  # (1, 18)
 
-X_full = np.hstack([gain_row_2d, X_extra])  # (1, 267)
+X_full = np.hstack([gain_row_2d, X_extra])  # (1, 273)
 
 # ----------------------------------------
 # 6. Girdiyi Scaler’dan Geçir ve Torch Tensor’a Dönüştür
 # ----------------------------------------
-X_scaled = scaler_X.transform(X_full)                      # (1, 267)
+X_scaled = scaler_X.transform(X_full)                      # (1, 273)
 X_tensor = torch.tensor(X_scaled, dtype=torch.float32).to(device)
 
 # ----------------------------------------

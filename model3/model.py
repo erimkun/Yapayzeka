@@ -6,8 +6,9 @@ class InverseGainMLP(nn.Module):
         super().__init__()
 
         # --- 1. Ortak Paylaşımlı Katmanlar (Shared MLP) ---
+        # Giriş boyutu 255 ham kazanç + 18 ek özellik = 273
         self.shared = nn.Sequential(
-            nn.Linear(267, 512),
+            nn.Linear(273, 512),
             nn.LayerNorm(512),
             nn.ReLU(inplace=True),
             nn.Dropout(p=0.2),
@@ -41,7 +42,7 @@ class InverseGainMLP(nn.Module):
         ])
 
     def forward(self, x):
-        # x: [batch_size, 267]
+        # x: [batch_size, 273]
         shared_out = self.shared(x)   # [batch_size, 128]
         fused = self.fusion(shared_out)  # [batch_size, 64]
         outputs = [head(fused) for head in self.heads]  # Liste: 10 × [batch_size, 1]
