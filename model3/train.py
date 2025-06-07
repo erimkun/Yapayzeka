@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from model import InverseGainMLP
 from data_split import train_loader, val_loader
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
+from scaling import y_tensor
 
 # === 1. CİHAZ AYARI ===
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -14,19 +15,17 @@ print(f"🖥️ Kullanılan cihaz: {device}")
 # === 2. MODEL, LOSS, OPTIMIZER ===
 model = InverseGainMLP().to(device)
 
-# Komponent bazlı ağırlıklandırma (özellikle vdd, rg1, rg2 üzerine odak)
-component_weights = torch.tensor([
-    0.04,  # rin
-    0.20,  # rg1
-    0.20,  # rg2
-    0.08,  # rd
-    0.08,  # rs
-    0.03,  # cs
-    0.03,  # c1
-    0.03,  # c2
-    0.08,  # rl
-    0.23   # vdd
-], dtype=torch.float32).to(device)
+# Komponent bazlı ağırlıklandırma
+# Önceki sürümde sabit değerler kullanılıyordu. Bunun yerine
+# hedef değişkenlerin standart sapmalarına dayalı dinamik bir
+# ağırlıklandırma tercih edildi. Böylece varyansı düşük
+# komponentler (tahmini görece zor olanlar) eğitimde daha çok
+# önem kazanacak.
+with torch.no_grad():
+    stds = torch.std(y_tensor, dim=0)
+    component_weights = 1.0 / stds
+    component_weights /= component_weights.sum()
+    component_weights = component_weights.to(device)
 
 optimizer = optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
 scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=10, T_mult=2, eta_min=1e-5)
